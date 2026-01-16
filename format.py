@@ -4,6 +4,8 @@ import urllib.request
 import urllib.error
 import re
 import os
+import argparse
+import datetime
 from typing import List, Dict, Optional, Set
 from dotenv import load_dotenv
 
@@ -112,7 +114,7 @@ def format_output(items_data: List[Dict[str, str]]) -> str:
         
     return '\n'.join(output_lines)
 
-def process_watchlist(urls: List[str], output_file_path: str = "plex_watchlist.txt") -> bool:
+def process_watchlist(urls: List[str], output_file_path: str = "plex_watchlist.txt", remove_unreleased: bool = False) -> bool:
     """
     Main logic to fetch, parse, and save watchlist data.
     
@@ -136,6 +138,20 @@ def process_watchlist(urls: List[str], output_file_path: str = "plex_watchlist.t
         
         for item in items:
             data = extract_item_data(item)
+            
+            if remove_unreleased:
+                try:
+                    # Current year
+                    current_year = datetime.datetime.now().year
+                    # Parse item year
+                    item_year = int(data['year'])
+                    
+                    if item_year > current_year:
+                        continue 
+                except ValueError:
+                    # Use year is not a valid number (e.g. "Unknown release Year"), we keep it safely
+                    pass
+
             # Simple deduplication based on link
             if data['link'] not in seen_links:
                 seen_links.add(data['link'])
@@ -176,9 +192,13 @@ def main():
         print("Error: No valid URLs found in RSS_URLS environment variable.")
         exit(1)
 
+    parser = argparse.ArgumentParser(description="Plex Watchlist RSS Formatter")
+    parser.add_argument("--remove-unreleased", action="store_true", help="Remove movies that are not yet released (future year)")
+    args = parser.parse_args()
+
     output_file = "output.txt"
     
-    if process_watchlist(rss_urls, output_file):
+    if process_watchlist(rss_urls, output_file, args.remove_unreleased):
         print("Output file created successfully")
     else:
         print("Failed to create output file")

@@ -45,6 +45,15 @@ Run the script from the command line:
 python3 format.py
 ```
 
+### Optional Flags
+
+- `--remove-unreleased`: Filters out items with release years in the future (not yet released)
+
+**Example with flag**:
+```bash
+python3 format.py --remove-unreleased
+```
+
 Upon success, an `output.txt` file will be generated in the same directory containing the formatted list of items.
 
 ## Output Format
