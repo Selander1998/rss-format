@@ -24,7 +24,7 @@ This script fetches RSS feeds (specifically designed for Plex watchlists), parse
 
 2.  **Install dependencies**:
     ```bash
-    pip install python-dotenv
+    pip install -r requirements.txt
     ```
 
 ## Configuration
