@@ -114,6 +114,40 @@ def format_output(items_data: List[Dict[str, str]]) -> str:
         
     return '\n'.join(output_lines)
 
+def is_released(url: str, title: str) -> bool:
+    """
+    Checks if the item is released by fetching its Plex page and looking for 'Where to Watch'.
+    
+    Args:
+        url: The Plex URL of the item.
+        title: Title of the item (for logging).
+        
+    Returns:
+        True if released (or if check fails), False if likely unreleased.
+    """
+    try:
+        # Use a real user agent to avoid being blocked
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req) as response:
+            html_content = response.read().decode('utf-8')
+            
+            # Heuristic 1: Check for "Where to Watch" section
+            if "Where to Watch" in html_content:
+                return True
+                
+            # Heuristic 2: Check for "Audience Rating" or "Tomatometer"
+            if "audience rating" in html_content or "Tomatometer" in html_content:
+                return True
+            
+            return False
+            
+    except Exception as e:
+        print(f"Warning: Could not check release status for {title} ({e}). Assuming released.")
+        return True
+
 def process_watchlist(urls: List[str], output_file_path: str = "plex_watchlist.txt", remove_unreleased: bool = False) -> bool:
     """
     Main logic to fetch, parse, and save watchlist data.
@@ -147,7 +181,13 @@ def process_watchlist(urls: List[str], output_file_path: str = "plex_watchlist.t
                     item_year = int(data['year'])
                     
                     if item_year > current_year:
-                        continue 
+                        continue
+                    elif item_year == current_year:
+                        # Deep check for current year items
+                        print(f"Checking release status for: {data['title']}...")
+                        if not is_released(data['link'], data['title']):
+                            print(f"Skipping unreleased item: {data['title']}")
+                            continue
                 except ValueError:
                     # Use year is not a valid number (e.g. "Unknown release Year"), we keep it safely
                     pass
