@@ -1,4 +1,3 @@
-from _json import make_scanner
 import xml.etree.ElementTree as ET
 import urllib.request
 import urllib.error
@@ -173,6 +172,10 @@ def process_watchlist(urls: List[str], output_file_path: str = "plex_watchlist.t
         for item in items:
             data = extract_item_data(item)
             
+            # Simple deduplication based on link - check before expensive operations
+            if data['link'] in seen_links:
+                continue
+
             if remove_unreleased:
                 try:
                     # Current year
@@ -192,15 +195,13 @@ def process_watchlist(urls: List[str], output_file_path: str = "plex_watchlist.t
                     # Use year is not a valid number (e.g. "Unknown release Year"), we keep it safely
                     pass
 
-            # Simple deduplication based on link
-            if data['link'] not in seen_links:
-                seen_links.add(data['link'])
-                all_items_data.append(data)
+            # Add to list and seen set
+            seen_links.add(data['link'])
+            all_items_data.append(data)
 
     if not all_items_data:
         print("No items found to write.")
-        # If we failed to find items, we might not want to overwrite the file 
-        # with empty content, or maybe we do? 
+        # If we failed to find items, we might not want to overwrite the file with empty content, or maybe we do? 
         # The original code returned False.
         return False
 
@@ -234,9 +235,10 @@ def main():
 
     parser = argparse.ArgumentParser(description="Plex Watchlist RSS Formatter")
     parser.add_argument("--remove-unreleased", action="store_true", help="Remove movies that are not yet released (future year)")
+    parser.add_argument("-o", "--output", default="output.txt", help="Path to the output file (default: output.txt)")
     args = parser.parse_args()
 
-    output_file = "output.txt"
+    output_file = args.output
     
     if process_watchlist(rss_urls, output_file, args.remove_unreleased):
         print("Output file created successfully")

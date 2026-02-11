@@ -47,11 +47,12 @@ python3 format.py
 
 ### Optional Flags
 
-- `--remove-unreleased`: Filters out items with release years in the future (not yet released)
+- `--remove-unreleased`: Filters out items with release years in the future (not yet released).
+- `--output` / `-o`: Specify the path to the output file (default: `output.txt`).
 
-**Example with flag**:
+**Example with flags**:
 ```bash
-python3 format.py --remove-unreleased
+python3 format.py --remove-unreleased --output my_watchlist.txt
 ```
 
 Upon success, an `output.txt` file will be generated in the same directory containing the formatted list of items.
