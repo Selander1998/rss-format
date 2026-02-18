@@ -93,6 +93,32 @@ def extract_item_data(item: ET.Element) -> Dict[str, str]:
         "link": link
     }
 
+def load_blacklist(blacklist_path: str) -> Set[str]:
+    """
+    Loads the blacklist from a text file.
+    Each non-empty, non-comment line is treated as a title to exclude (case-insensitive).
+
+    Args:
+        blacklist_path: Path to the blacklist file.
+
+    Returns:
+        A set of lowercased title strings to exclude.
+    """
+    blacklist: Set[str] = set()
+    if not os.path.exists(blacklist_path):
+        return blacklist
+    try:
+        with open(blacklist_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    blacklist.add(line.lower())
+        print(f"Loaded {len(blacklist)} blacklist entries from '{blacklist_path}'")
+    except IOError as e:
+        print(f"Warning: Could not read blacklist file '{blacklist_path}': {e}")
+    return blacklist
+
+
 def format_output(items_data: List[Dict[str, str]]) -> str:
     """
     Formats the parsed items into the desired string output.
@@ -149,7 +175,7 @@ def is_released(url: str, title: str) -> bool:
         print(f"Warning: Could not check release status for {title} ({e}). Assuming released.")
         return True
 
-def process_watchlist(urls: List[str], output_file_path: str = "plex_watchlist.txt", remove_unreleased: bool = False) -> bool:
+def process_watchlist(urls: List[str], output_file_path: str = "plex_watchlist.txt", remove_unreleased: bool = False, blacklist: Optional[Set[str]] = None) -> bool:
     """
     Main logic to fetch, parse, and save watchlist data.
     
@@ -176,6 +202,11 @@ def process_watchlist(urls: List[str], output_file_path: str = "plex_watchlist.t
             
             # Simple deduplication based on link - check before expensive operations
             if data['link'] in seen_links:
+                continue
+
+            # Skip blacklisted titles
+            if blacklist and data['title'].lower() in blacklist:
+                print(f"Skipping blacklisted item: {data['title']}")
                 continue
 
             if remove_unreleased:
@@ -238,11 +269,14 @@ def main():
     parser = argparse.ArgumentParser(description="Plex Watchlist RSS Formatter")
     parser.add_argument("--remove-unreleased", action="store_true", help="Remove movies that are not yet released (future year)")
     parser.add_argument("-o", "--output", default="output.txt", help="Path to the output file (default: output.txt)")
+    parser.add_argument("--blacklist", default="blacklist.txt", help="Path to the blacklist file (default: blacklist.txt)")
     args = parser.parse_args()
 
     output_file = args.output
     
-    if process_watchlist(rss_urls, output_file, args.remove_unreleased):
+    blacklist = load_blacklist(args.blacklist)
+
+    if process_watchlist(rss_urls, output_file, args.remove_unreleased, blacklist):
         print("Output file created successfully")
     else:
         print("Failed to create output file")
