@@ -8,6 +8,8 @@ import datetime
 from typing import List, Dict, Optional, Set
 from dotenv import load_dotenv
 
+USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+
 def fetch_feed_data(url: str) -> Optional[str]:
     """
     Fetches XML content from a URL.
@@ -127,7 +129,7 @@ def is_released(url: str, title: str) -> bool:
     try:
         # Use a real user agent to avoid being blocked
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': USER_AGENT
         }
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req) as response:
