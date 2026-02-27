@@ -7,7 +7,7 @@ This script fetches RSS feeds (specifically designed for Plex watchlists), parse
 - **Fetch & Parse**: Retrieves RSS XML from provided URLs.
 - **Data Extraction**: Extracts Title, Year, Category (Type), and Link.
 - **Deduplication**: Prevents duplicate entries based on the item link.
-- **Formatted Output**: Generates a text file (`output.txt` or specified path).
+- **Formatted Output**: Generates a text file (`output.txt` or specified path), or prints directly with `--print`.
 - **Blacklist**: Skips items whose titles appear in a manually maintained blacklist file.
 
 ## Prerequisites
@@ -51,10 +51,12 @@ python3 format.py
 - `--remove-unreleased`: Filters out items with release years in the future (not yet released).
 - `--output` / `-o`: Specify the path to the output file (default: `output.txt`).
 - `--blacklist`: Path to the blacklist txt file.
+- `--print`: Print the formatted output directly instead of writing to a file.
 
 **Example with flags**:
 ```bash
 python3 format.py --remove-unreleased --output my_watchlist.txt
+python3 format.py --print
 ```
 
 ### Blacklist

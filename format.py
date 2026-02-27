@@ -175,7 +175,7 @@ def is_released(url: str, title: str) -> bool:
         print(f"Warning: Could not check release status for {title} ({e}). Assuming released.")
         return True
 
-def process_watchlist(urls: List[str], output_file_path: str = "plex_watchlist.txt", remove_unreleased: bool = False, blacklist: Optional[Set[str]] = None) -> bool:
+def process_watchlist(urls: List[str], output_file_path: str = "plex_watchlist.txt", remove_unreleased: bool = False, blacklist: Optional[Set[str]] = None, print_output: bool = False) -> Optional[str]:
     """
     Main logic to fetch, parse, and save watchlist data.
     
@@ -239,15 +239,19 @@ def process_watchlist(urls: List[str], output_file_path: str = "plex_watchlist.t
         return False
 
     formatted_content = format_output(all_items_data)
-    
+
+    if print_output:
+        print(f"\nSuccessfully parsed {len(all_items_data)} total unique items from watchlist")
+        return formatted_content
+
     try:
         with open(output_file_path, 'w', encoding='utf-8') as f:
             f.write(formatted_content)
         print(f"\nSuccessfully parsed {len(all_items_data)} total unique items from watchlist")
-        return True
+        return formatted_content
     except IOError as e:
         print(f"Error writing to file {output_file_path}: {e}")
-        return False
+        return None
 
 def main():
     load_dotenv()
@@ -270,18 +274,24 @@ def main():
     parser.add_argument("--remove-unreleased", action="store_true", help="Remove movies that are not yet released (future year)")
     parser.add_argument("-o", "--output", default="output.txt", help="Path to the output file (default: output.txt)")
     parser.add_argument("--blacklist", default="blacklist.txt", help="Path to the blacklist file (default: blacklist.txt)")
+    parser.add_argument("--print", action="store_true", dest="print_output", help="Print output instead of writing to file")
     args = parser.parse_args()
 
     output_file = args.output
     
     blacklist = load_blacklist(args.blacklist)
 
-    if process_watchlist(rss_urls, output_file, args.remove_unreleased, blacklist):
-        print("Output file created successfully")
+    result = process_watchlist(rss_urls, output_file, args.remove_unreleased, blacklist, args.print_output)
+
+    if result is not None:
+        if not args.print_output:
+            print("Output file created successfully")
     else:
         print("Failed to create output file")
-    
-    print(f"\nDone!")
+
+    if args.print_output and result is not None:
+        print("\nOutput:\n")
+        print(result)
 
 if __name__ == "__main__":
     main()
